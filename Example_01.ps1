@@ -49,6 +49,11 @@ Write-Host "Write-Host test"
 # Write-Output writes to console
 Write-Output "Write-Output test"
 
+# Out-Null cmdlet sends pipe output to NULL stream (removing it from pipeline)
+# and prevents piped objecte from being sent to the console output.
+Write-Host "This *is* displayed on console output" | Out-Null       # not using any pipe
+Write-Output "This *is not* displayed on console output" | Out-Null # using a pipe
+
 # Aliases for Write-Output
 echo 'echo Hello world'
 write 'write Hello world'
