@@ -19,30 +19,55 @@ This is a multi-line
 comment
 #> 
 
+# Set output color to yellow for entire script
+$fg = $host.ui.RawUI.ForegroundColor
+$host.ui.RawUI.ForegroundColor = "yellow"
+
+# Using .NET APIs
+
+[System.Console]::WriteLine(".NET WriteLine")
+
+Add-Type -AssemblyName PresentationFramework
+
+[System.Windows.Messagebox]::Show('Messagebox caption text')
+
+$result = [System.Windows.MessageBox]::Show( ` # 
+    "Messagebox caption text", `
+    "Messagebox title text", `
+    [System.Windows.MessageBoxButton]::YesNoCancel, `
+    [System.Windows.MessageBoxImage]::Question
+)
+$result
+
+255 | Out-String                   # 255
+255 | Format-Hex | Out-String      # FF
+255 | Format-Hex -Raw | Out-String # FF 00 00 00
+
+# Write-Host writes to console
+Write-Host "Write-Host test"
+
 # Write-Output writes to console
 Write-Output "Write-Output test"
-# Write-Host writes to console
-Write-Host   "Write-Host test"
 
 # Aliases for Write-Output
-echo 'Hello world'
-write 'Hello world'
+echo 'echo Hello world'
+write 'write Hello world'
 
 # Write-Output redirected to file writes string to file
-Write-Output "Write-Output test" > .\data\Write-Output_test.txt
+Write-Output "Write-Output test" > .\out\Write-Output_test.txt
 # Write-Host redirected to file writes NOTHING to file
-Write-Host   "Write-Host test"   > .\data\Write-Host_test.txt # empty file
+Write-Host   "Write-Host test"   > .\out\Write-Host_test.txt # empty file
 
 # Write-Output to write a custom object
 $myobject = @{first="Peter"; last="Thor"}
 Write-Output $myobject # to console
-Write-Output $myobject > .\data\Write-Output_myobject.txt # to file
+Write-Output $myobject > .\out\Write-Output_myobject.txt # to file
 Write-Output $myobject | Format-List # piped to format commandlet
 
 # Write-Host to write a custom object
 $myobject = @{first="Peter"; last="Thor"}
 Write-Host $myobject # to console
-Write-Host $myobject > .\data\Write-Host_myobject.txt # nothing redirected
+Write-Host $myobject > .\out\Write-Host_myobject.txt # nothing redirected
 Write-Host $myobject | Format-List # nothing piped
 
 # Get-ChildItem commandlet: gets items and child items in location
@@ -82,7 +107,7 @@ $datetime
 $dt = New-Object System.DateTime
 $dt
 # calling constructor with parameters
-$sw = New-Object System.IO.StreamWriter -ArgumentList ".\data\StreamWriter_test.txt"
+$sw = New-Object System.IO.StreamWriter -ArgumentList ".\out\StreamWriter_test.txt"
 $sw
 $sw.WriteLine("System.IO.StreamWriter object wrote this!");
 $sw.Close();
@@ -199,7 +224,7 @@ $var--    # auto decriment
 #Success output stream (cmdlet is a syntactic placeholder and is not defined here)
 cmdlet > file     # Send success output to file, overwriting existing content
 cmdlet >> file    # Send success output to file, appending to existing content
-cmdlet 1>&2       # Send success and error output to error stream
+#cmdlet 1>&2       # Send success and error output to error stream ('1>&2' operator is reserved for future use)
 #Error output stream:
 cmdlet 2> file    # Send error output to file, overwriting existing content
 cmdlet 2>> file   # Send error output to file, appending to existing content
@@ -469,32 +494,25 @@ switch -CaseSensitive ($color) {
 }
 
 # Switch Statement with Wildcard Parameter
-$fg = $host.ui.RawUI.ForegroundColor
-$host.ui.RawUI.ForegroundColor = "yellow"
 switch -Wildcard ('Condition') {
     'Condition'         {'Normal match'}                 # yes match
     'Condit*'           {'Zero or more wildcard chars.'} # yes match
     'C[aoc]ndit[f-l]on' {'Range and set of chars.'}      # yes match
     'C?ndition'         {'Single char. wildcard'}        # yes match
     'Test*'             {'No match'} }                   # no match
-$host.ui.RawUI.ForegroundColor = $fg
 
 # Switch Statement with File Parameter
 # The -file parameter allows the switch statement to receive input from a ﬁle.
 # Each line of the ﬁle is evaluated by the switch statement.
-$fg = $host.ui.RawUI.ForegroundColor
-$host.ui.RawUI.ForegroundColor = "yellow"
-switch -file .\data\Switch_file_input.txt {
+switch -file .\in\Switch_file_input.txt {
     'good' { 'Good hair day.' }
     'bad'  { 'Bad hair day.' }
     'none' { 'No hair day.' }
     default { 'Unreconized hair day.' }
 }
-$host.ui.RawUI.ForegroundColor = $fg
 
 # Switch Statement with Regex Parameter
-$fg = $host.ui.RawUI.ForegroundColor
-$host.ui.RawUI.ForegroundColor = "yellow"
+
 $condition = "Con42dition" #try "Banana"
 switch -Regex ($condition) {
     'Con42dition'     {'Perfect match'}                       # Yes perfect match
@@ -504,12 +522,9 @@ switch -Regex ($condition) {
     '^C\w+ition$'     {'Anchors and one or more word chars.'} # Yes match
     'Banana'          {'Banana'}                              # No match
 }
-$host.ui.RawUI.ForegroundColor = $fg
 
 #  Switch Statement with Exact Parameter
 #  -Exact parameter enforces switch statements to perform exact case-insensitive matching
-$fg = $host.ui.RawUI.ForegroundColor
-$host.ui.RawUI.ForegroundColor = "yellow"
 switch -Exact ('Condition')
 {
     'condition'   {'First Action'}  # yes match
@@ -518,11 +533,8 @@ switch -Exact ('Condition')
     '^*ondition$' {'Fourth Action'} # no match (wildcard strings fail)
     'Conditio*'   {'Fifth Action'}  # no match (wildcard strings fail)
  }
- $host.ui.RawUI.ForegroundColor = $fg
 
 # Switch Statement with Expression Cases
-$fg = $host.ui.RawUI.ForegroundColor
-$host.ui.RawUI.ForegroundColor = "yellow"
 $myInput = 0
 switch($myInput) {
     # result of expression = 4, does not equal input 0 -> block is not run.
@@ -532,11 +544,8 @@ switch($myInput) {
     # input 0 > -1 and < 1, so expression evaluates to true -> block is run.
     {$_ -gt -1 -and $_ -lt 1 } { 'True. 0 > -1 and 0 < 1' }
 }
-$host.ui.RawUI.ForegroundColor = $fg
 
 #  Strings
-$fg = $host.ui.RawUI.ForegroundColor
-$host.ui.RawUI.ForegroundColor = "yellow"
 "Hello`r`nWorld"
 ""
 "Hello{0}World" -f [environment]::NewLine
@@ -589,4 +598,3 @@ $result = 'You should visit {0}' -f $hashtable.city
 Write-Host $result # prints "You should visit Seattle"
 
 $host.ui.RawUI.ForegroundColor = $fg
-

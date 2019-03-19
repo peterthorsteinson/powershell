@@ -74,10 +74,15 @@ Get-Process | Where-Object {$_.handles -gt 900} | Sort-Object -Property handles 
 # Get-WinEvent commandlet: Gets events from event logs and event tracing logs on local and remote computers. 
 Get-WinEvent -LogName security -MaxEvents 10 | 
     Select-Object -Property Id, TimeCreated, Message |
-    Sort-Object -Property TimeCreated | convertto-html | out-file .\data\sec.html
+    Sort-Object -Property TimeCreated | convertto-html | out-file .\out\sec.html
 
 # Reading and processing XML data
-$xml = [xml](get-content .\data\R_and_j.xml)
+
+curl -Uri http://www.ibiblio.org/xml/examples/shakespeare/r_and_j.xml | `
+    Select-Object -ExpandProperty Content | `
+    Out-File -FilePath .\r_and_j\r_and_j.xml
+
+$xml = [xml](get-content .\R_and_j\R_and_j.xml)
 $xml.PLAY
 $xml.PLAY.ACT
 $xml.PLAY.ACT[0].SCENE[0].SPEECH
@@ -85,9 +90,9 @@ $xml.PLAY.ACT.SCENE.SPEECH | Group-Object speaker | Sort-Object count
 
 # Output to file
 Get-Process > procs.txt
-Get-Process | Out-File .\data\procs.txt     # plain text
-get-process | Export-csv .\data\proc.csv    # csv formatted text
-get-process | Export-clixml .\data\proc.xml # xml formatted text
+Get-Process | Out-File .\out\procs.txt     # plain text
+get-process | Export-csv .\out\proc.csv    # csv formatted text
+get-process | Export-clixml .\out\proc.xml # xml formatted text
 
 # Limiting objects returned
 Get-Process | Sort-Object -Descending -Property StartTime | Select-Object -First 5
@@ -95,7 +100,7 @@ Get-Process | Sort-Object -Descending -Property StartTime | Select-Object -First
 # Measure-Object commandlet: Calculates numeric properties of objects, and characters, words, and lines in string objects.
 Get-ChildItem | Measure-Object       # Count the files and folders in a directory
 Get-ChildItem | Measure-Object -Property length -Minimum -Maximum -Average
-Get-Content .\data\R_and_j.xml | Measure-Object -Character -Line -Word
+Get-Content .\R_and_j\R_and_j.xml | Measure-Object -Character -Line -Word
 # Get-Process commandlet: gets processes running on local computer
 Get-Process | Measure-Object                 # Only meaningful measure here is process count
 Get-Process | Measure-Object WorkingSet -Sum # WorkingSet (WS) is process memory in bytes
@@ -115,9 +120,9 @@ Invoke-Command `
 # The == output indicates a property value in both reference set and difference set.
 # This example: Get-Process is written to disk and then compared to 2nd Get-Process call
 # They sould be mostly the same.
-Get-Process | Export-csv .\data\proc.csv
+Get-Process | Export-csv .\out\proc.csv
 Compare-Object `
-    -ReferenceObject (Import-Csv .\data\proc.csv) `
+    -ReferenceObject (Import-Csv .\out\proc.csv) `
     -DifferenceObject (Get-Process) `
     -Property Name `
     -IncludeEqual
