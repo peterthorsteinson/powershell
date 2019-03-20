@@ -129,3 +129,117 @@ Invoke-Sqlcmd2 -Serverinstance $Server `
     -Database $DBName -query $Query `
     -Username $UID -Password $Password
 
+#  Signing Scripts
+
+# Cryptographic Hash SHA256
+$plaintext="The time has come the walrus said.."
+$hash=[System.Security.Cryptography.HashAlgorithm]::Create("sha256").ComputeHash( `
+    [System.Text.Encoding]::UTF8.GetBytes($plaintext))
+#convert to hex
+[System.BitConverter]::ToString($hash)
+#convert to lower case hex without '-'
+[System.BitConverter]::ToString($hash).Replace("-","").ToLower()
+#convert to base64
+[Convert]::ToBase64String($hash)
+
+#  WMI (Windows Management Instrumentation) and CIM (Common Information Model)
+# See: https://devblogs.microsoft.com/scripting/should-i-use-cim-or-wmi-with-windows-powershell
+
+# Get-WmiObject     <-> Get-CimInstance
+# Invoke-WmiMethod  <-> Invoke-CimMethod
+# Register-WmiEvent <-> Register-CimIndicationEvent
+# Remove-WmiObject  <-> Remove-CimInstance
+# Set-WmiInstance   <-> Set-CimInstance
+
+# list processes to see Win32_Process and CIM_Process for WMI and CIM APIs
+Get-CimClass *Process | Select-Object CimClassName # Note output: 
+
+# Querying objects in WMI
+Get-WmiObject -Class Win32_Process
+
+#  Querying objects in CIM
+Get-CimInstance -ClassName Win32_Process
+
+# Filtering Queries with WMI
+Get-WmiObject -Class Win32_Process -Filter "Name = 'powershell.exe'"
+# Fltering Queries with CIM
+Get-CimInstance -ClassName Win32_Process -Filter "Name = 'powershell.exe'"
+
+# Querying with WQL
+Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE Name = 'powershell.exe'"
+# Querying with CQL
+Get-CimInstance -Query "SELECT * FROM Win32_Process WHERE Name = 'powershell.exe'"
+
+# TCP Communications
+# TCP messages may be blocked by your software ﬁrewall or any external facing
+# ﬁrewalls you are trying to go through. Ensure that the TCP port you set in the
+# above command is open and that you are have setup the listener on the same port.
+
+#  TCP listener
+Function Receive-TCPMessage {
+    Param (
+        [Parameter(Mandatory=$true, Position=0)]
+        [ValidateNotNullOrEmpty()]
+        [int] $Port
+    )
+    Process {
+        Try {
+            # Set up endpoint and start listening
+            $endpoint = new-object System.Net.IPEndPoint([ipaddress]::any,$port)
+            $listener = new-object System.Net.Sockets.TcpListener $EndPoint
+            $listener.start()                 
+            # Wait for an incoming connection
+            $data = $listener.AcceptTcpClient()
+            # Stream setup
+            $stream = $data.GetStream()
+            $bytes = New-Object System.Byte[] 1024
+            # Read data from stream and write it to host
+            while (($i = $stream.Read($bytes,0,$bytes.Length)) -ne 0) {
+                $EncodedText = New-Object System.Text.ASCIIEncoding
+                $data = $EncodedText.GetString($bytes,0, $i)
+                Write-Output $data
+            }
+            # Close TCP connection and stop listening
+            $stream.close()
+            $listener.stop()
+        }
+        Catch {
+            "Receive Message failed with: `n" + $Error[0]
+        }
+    }
+}
+
+#  TCP Sender
+Function Send-TCPMessage {
+    Param (
+        [Parameter(Mandatory=$true, Position=0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$EndPoint
+        ,
+        [Parameter(Mandatory=$true, Position=1)]
+        [int] $Port
+        ,
+        [Parameter(Mandatory=$true, Position=2)]
+        [string]$Message
+    )
+    Process {
+        # Setup connection
+        $IP = [System.Net.Dns]::GetHostAddresses($EndPoint)
+        $Address = [System.Net.IPAddress]::Parse($IP)
+        $Socket = New-Object System.Net.Sockets.TCPClient($Address,$Port)
+        # Setup stream writer
+        $Stream = $Socket.GetStream()
+        $Writer = New-Object System.IO.StreamWriter($Stream)
+        # Write message to stream
+        $Message | % {
+            $Writer.WriteLine($_)
+            $Writer.Flush()
+        }
+        # Close connection and stream
+        $Stream.Close()
+        $Socket.Close()
+    }
+}
+
+# Send a message
+Send-TCPMessage -Port 29800 -Endpoint 192.168.0.1 -message "My first TCP message !"
