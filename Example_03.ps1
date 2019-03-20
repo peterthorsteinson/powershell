@@ -208,6 +208,8 @@ Function Receive-TCPMessage {
         }
     }
 }
+$receivemsg = Receive-TCPMessage -Port 29800 
+Write-Host "Receive-TCPMessage: $($receivemsg)" -ForegroundColor yellow
 
 #  TCP Sender
 Function Send-TCPMessage {
@@ -240,6 +242,6 @@ Function Send-TCPMessage {
         $Socket.Close()
     }
 }
-
-# Send a message
-Send-TCPMessage -Port 29800 -Endpoint 192.168.0.1 -message "My first TCP message !"
+$sendmsg = "My first TCP message !"
+Write-Host "Send-TCPMessage: $($sendmsg)" -ForegroundColor yellow
+Send-TCPMessage -Port 29800 -Endpoint 192.168.0.1 -message $sendmsg
